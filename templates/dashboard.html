@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Government Dashboard — Disease Surveillance</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    /* ══════════════════════════════════════════════════════
+       NAV FIX — force navbar to match all other pages
+       Overrides whatever style.css does to .navbar
+       ══════════════════════════════════════════════════════ */
+    .navbar {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 0.9rem 2rem !important;
+      background: #0a192f !important;
+      border-bottom: 1px solid rgba(100,255,218,0.12) !important;
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 100 !important;
+    }
+    .nav-brand {
+      color: #64ffda !important;
+      font-size: 1.1rem !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.05em !important;
+      text-decoration: none !important;
+    }
+    .nav-links {
+      display: flex !important;
+      align-items: center !important;
+      gap: 0.3rem !important;
+      list-style: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .nav-links li a {
+      color: #8892b0 !important;
+      text-decoration: none !important;
+      padding: 0.45rem 0.9rem !important;
+      border-radius: 6px !important;
+      font-size: 0.88rem !important;
+      transition: color 0.2s, background 0.2s !important;
+    }
+    .nav-links li a:hover {
+      color: #64ffda !important;
+      background: rgba(100,255,218,0.08) !important;
+    }
+    .nav-links li a.active {
+      color: #64ffda !important;
+      background: rgba(100,255,218,0.12) !important;
+      font-weight: 600 !important;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       Dashboard page styles
+       ══════════════════════════════════════════════════════ */
+    body { background: #0a192f; color: #ccd6f6; font-family: 'Segoe UI', sans-serif; margin: 0; }
+
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: #172a45;
+      border: 1px solid rgba(100,255,218,0.15);
+      border-radius: 10px;
+      padding: 1.2rem 1rem;
+      text-align: center;
+    }
+    .stat-card .label {
+      color: #8892b0; font-size: 0.78rem;
+      letter-spacing: 0.05em; text-transform: uppercase; margin: 0 0 0.4rem;
+    }
+    .stat-card .value {
+      color: #64ffda; font-size: 2rem; font-weight: 700; margin: 0; line-height: 1.1;
+    }
+    .stat-card.danger  .value { color: #ff4d4d; }
+    .stat-card.warning .value { color: #ff9f43; }
+    .stat-card.info    .value { color: #54a0ff; }
+
+    .section-title {
+      color: #64ffda; font-size: 1.05rem; font-weight: 600;
+      letter-spacing: 0.04em; margin: 0 0 1rem;
+      border-left: 3px solid #64ffda; padding-left: 0.7rem;
+    }
+    .chart-card {
+      background: #172a45; border: 1px solid rgba(100,255,218,0.12);
+      border-radius: 10px; padding: 1.2rem; margin-bottom: 1.5rem;
+    }
+    .chart-card img { width: 100%; border-radius: 6px; }
+
+    /* RMSE */
+    .rmse-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem; margin-top: 0.5rem;
+    }
+    .rmse-card {
+      background: #0d2137; border: 1px solid rgba(100,255,218,0.15);
+      border-radius: 8px; padding: 1rem; text-align: center;
+    }
+    .rmse-card .model-name {
+      color: #8892b0; font-size: 0.78rem; text-transform: uppercase;
+      letter-spacing: 0.05em; margin: 0 0 0.4rem;
+    }
+    .rmse-card .rmse-val { font-size: 1.7rem; font-weight: 700; margin: 0; line-height: 1.1; }
+    .rmse-card.arima .rmse-val { color: #ff9f43; }
+    .rmse-card.lstm  .rmse-val { color: #54a0ff; }
+    .rmse-card.seir  .rmse-val { color: #ff4d4d; }
+    .rmse-card.best-card { border: 2px solid rgba(100,255,218,0.5); background: #0a1f35; }
+    .rmse-card.best-card .rmse-val { color: #64ffda; }
+    .best-badge {
+      display: inline-block; background: rgba(100,255,218,0.15); color: #64ffda;
+      padding: 2px 10px; border-radius: 20px; font-size: 0.72rem; margin-top: 0.4rem;
+    }
+
+    /* Tables */
+    .alerts-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .alerts-table th {
+      color: #64ffda; text-align: left; padding: 0.5rem 0.8rem;
+      border-bottom: 1px solid rgba(100,255,218,0.2); font-weight: 600;
+      text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em;
+    }
+    .alerts-table td { color: #ccd6f6; padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(100,255,218,0.06); }
+    .alerts-table tr:hover td { background: rgba(100,255,218,0.04); }
+    .risk-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .risk-High   { background: rgba(255,77,77,0.2);    color: #ff4d4d; }
+    .risk-Medium { background: rgba(255,159,67,0.2);   color: #ff9f43; }
+    .risk-Low    { background: rgba(100,255,218,0.15); color: #64ffda; }
+
+    @media (max-width: 600px) {
+      .dash-grid { grid-template-columns: repeat(2,1fr); }
+      .rmse-grid { grid-template-columns: repeat(2,1fr); }
+      .navbar { flex-direction: column; gap: 0.7rem; padding: 0.8rem 1rem !important; }
+      .nav-links { flex-wrap: wrap; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-brand">🦠 DiseaseWatch</div>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/manual">Manual Prediction</a></li>
+    <li><a href="/auto">Auto Surveillance</a></li>
+    <li><a href="/dashboard" class="active">Dashboard</a></li>
+    <li><a href="/about">About</a></li>
+  </ul>
+</nav>
+
+<main class="container" style="padding:2rem 1.5rem; max-width:1100px; margin:0 auto;">
+
+  <h1 style="color:#ccd6f6; font-size:1.5rem; margin-bottom:0.3rem;">
+    🏛 Government Surveillance Dashboard
+  </h1>
+  <p style="color:#8892b0; font-size:0.85rem; margin-bottom:1.8rem;">
+    National Disease Monitoring — Last updated:
+    <strong style="color:#64ffda">{{ latest_date }}</strong>
+  </p>
+
+  <!-- KPI Cards -->
+  <div class="dash-grid">
+    <div class="stat-card">
+      <p class="label">Diseases Monitored</p>
+      <p class="value">{{ stats.monitored }}</p>
+    </div>
+    <div class="stat-card danger">
+      <p class="label">High-Risk Alerts</p>
+      <p class="value">{{ stats.high_risk }}</p>
+    </div>
+    <div class="stat-card warning">
+      <p class="label">Cases This Week</p>
+      <p class="value">{{ stats.reports }}</p>
+    </div>
+    <div class="stat-card info">
+      <p class="label">Model Accuracy</p>
+      <p class="value">{{ stats.accuracy }}%</p>
+    </div>
+    <div class="stat-card">
+      <p class="label">Hotspot Region</p>
+      <p class="value" style="font-size:1rem; padding-top:0.5rem;">{{ stats.hotspot }}</p>
+    </div>
+  </div>
+
+  <!-- 30-Day Trend -->
+  <div class="chart-card">
+    <h2 class="section-title">📈 30-Day Disease Case Trend</h2>
+    <img src="data:image/png;base64,{{ trend_chart }}" alt="30-Day Trend" />
+  </div>
+
+  <!-- Regional Bar -->
+  <div class="chart-card">
+    <h2 class="section-title">🗺 Top 5 High-Risk Regions (7-Day Total)</h2>
+    <img src="data:image/png;base64,{{ bar_chart }}" alt="Regional Risk" />
+  </div>
+
+  <!-- SEIR Chart -->
+  <div class="chart-card">
+    <h2 class="section-title">🔬 SEIR Model Projection — {{ seir_disease }}</h2>
+    <p style="color:#8892b0; font-size:0.82rem; margin:-0.4rem 0 0.8rem;">
+      R₀ = <strong style="color:#64ffda">{{ seir_r0 }}</strong>
+      &nbsp;|&nbsp; Dynamic beta model — rise → peak → decline
+    </p>
+    <img src="data:image/png;base64,{{ seir_chart }}" alt="SEIR Chart" />
+  </div>
+
+  <!-- RMSE Model Evaluation -->
+  <div class="chart-card">
+    <h2 class="section-title">📊 Model Evaluation — RMSE (Lower is Better)</h2>
+    <p style="color:#8892b0; font-size:0.82rem; margin:-0.4rem 0 1rem;">
+      Evaluated on last 14 days of actual data vs each model's predictions.
+    </p>
+    <div class="rmse-grid">
+
+      <div class="rmse-card arima {% if best_model == 'ARIMA' %}best-card{% endif %}">
+        <p class="model-name">ARIMA</p>
+        <p class="rmse-val">{% if rmse_arima is not none %}{{ rmse_arima }}{% else %}N/A{% endif %}</p>
+        {% if best_model == 'ARIMA' %}<span class="best-badge">⭐ Best Model</span>{% endif %}
+      </div>
+
+      <div class="rmse-card lstm {% if best_model == 'LSTM' %}best-card{% endif %}">
+        <p class="model-name">LSTM</p>
+        <p class="rmse-val">{% if rmse_lstm is not none %}{{ rmse_lstm }}{% else %}N/A{% endif %}</p>
+        {% if best_model == 'LSTM' %}<span class="best-badge">⭐ Best Model</span>{% endif %}
+      </div>
+
+      <div class="rmse-card seir {% if best_model == 'SEIR' %}best-card{% endif %}">
+        <p class="model-name">SEIR</p>
+        <p class="rmse-val">{% if rmse_seir is not none %}{{ rmse_seir }}{% else %}N/A{% endif %}</p>
+        {% if best_model == 'SEIR' %}<span class="best-badge">⭐ Best Model</span>{% endif %}
+      </div>
+
+      <div class="rmse-card best-card" style="border-color:rgba(100,255,218,0.6);">
+        <p class="model-name">Best Performing</p>
+        <p class="rmse-val" style="color:#64ffda; font-size:1.4rem;">{{ best_model }}</p>
+        <span class="best-badge">Lowest RMSE</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Active Alerts -->
+  {% if alerts %}
+  <div class="chart-card">
+    <h2 class="section-title">⚠ Active Disease Alerts</h2>
+    <table class="alerts-table">
+      <thead>
+        <tr>
+          <th>Disease</th><th>Region</th><th>Risk</th>
+          <th>Growth %</th><th>Score</th><th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in alerts %}
+        <tr>
+          <td><strong style="color:#ccd6f6;">{{ a.name }}</strong></td>
+          <td>{{ a.region }}</td>
+          <td><span class="risk-badge risk-{{ a.risk }}">{{ a.risk }}</span></td>
+          <td style="color:{% if a.growth_pct > 30 %}#ff4d4d{% elif a.growth_pct > 10 %}#ff9f43{% else %}#64ffda{% endif %}">
+            {{ a.growth_pct }}%
+          </td>
+          <td>{{ a.score }}</td>
+          <td style="color:#8892b0; font-size:0.8rem;">{{ a.reason }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- Full Rankings -->
+  <div class="chart-card">
+    <h2 class="section-title">🏅 All Disease Risk Rankings</h2>
+    <table class="alerts-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Disease</th><th>Region</th>
+          <th>Current Cases</th><th>Risk</th><th>Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in ranked %}
+        <tr>
+          <td style="color:#64ffda; font-weight:700;">{{ loop.index }}</td>
+          <td><strong style="color:#ccd6f6;">{{ r.name }}</strong></td>
+          <td>{{ r.region }}</td>
+          <td>{{ r.current }}</td>
+          <td><span class="risk-badge risk-{{ r.risk }}">{{ r.risk }}</span></td>
+          <td>
+            <div style="background:#0a192f; border-radius:4px; height:8px; width:100%; min-width:80px;">
+              <div style="background:{% if r.risk=='High' %}#ff4d4d{% elif r.risk=='Medium' %}#ff9f43{% else %}#64ffda{% endif %};
+                          width:{{ r.score }}%; height:8px; border-radius:4px;"></div>
+            </div>
+            <span style="font-size:0.78rem; color:#8892b0;">{{ r.score }}/99</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer style="text-align:center; color:#4a5568; font-size:0.75rem;
+               padding:1.5rem 0; border-top:1px solid rgba(100,255,218,0.08);">
+  National Disease Surveillance &amp; Early Warning System — Phase 2
+  &nbsp;|&nbsp; AI-Powered · ARIMA · LSTM · SEIR
+</footer>
+
+</body>
+</html>

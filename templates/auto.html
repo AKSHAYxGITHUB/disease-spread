@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Autonomous disease surveillance using real-time AI risk classification across all monitored diseases.">
+    <title>Auto Surveillance - NDS &amp; EWS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-heartbeat"></i> NDS &amp; EWS
+            </div>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/manual">Manual Prediction</a>
+                <a href="/auto" class="active">Auto Surveillance</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/about">About</a>
+            </nav>
+        </header>
+
+        <main>
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="color: var(--primary-color);">Autonomous Disease Surveillance</h2>
+                <p style="opacity:0.7;">Real-time ARIMA-powered risk assessment across all registered diseases and regions.</p>
+
+                <form method="POST" action="/auto" id="auto-form">
+                    <button type="submit" class="btn btn-primary" id="run-btn" style="margin-top: 20px;">
+                        <i class="fas fa-satellite-dish"></i> Run System Diagnostics &amp; Surveillance
+                    </button>
+                </form>
+            </div>
+
+            {% if results %}
+            <div id="auto-results" class="fade-in">
+
+                <!-- Master Alert Banner -->
+                <div class="alert-panel {% if 'CRITICAL' in alert_msg %}alert-critical{% else %}alert-ok{% endif %}" style="margin-bottom: 24px;">
+                    <i class="fas {% if 'CRITICAL' in alert_msg %}fa-exclamation-triangle{% else %}fa-check-circle{% endif %}"></i>
+                    <strong>{{ alert_msg }}</strong>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 24px;">
+                    <div class="card stat-card">
+                        <h3>{{ ranking | length }}</h3>
+                        <p>Diseases Scanned</p>
+                        <i class="fas fa-virus" style="opacity:0.1; position:absolute; top:16px; right:16px; font-size:2.5rem;"></i>
+                    </div>
+                    <div class="card stat-card" style="border-color: var(--accent-red);">
+                        <h3 style="color:var(--accent-red);">{{ ranking | selectattr('risk','eq','High') | list | length }}</h3>
+                        <p>High Risk Diseases</p>
+                        <i class="fas fa-exclamation-triangle" style="opacity:0.1; position:absolute; top:16px; right:16px; font-size:2.5rem; color:var(--accent-red);"></i>
+                    </div>
+                    <div class="card stat-card">
+                        <h3>{{ hotspot.hotspot_region }}</h3>
+                        <p>Hotspot Region</p>
+                        <i class="fas fa-map-marker-alt" style="opacity:0.1; position:absolute; top:16px; right:16px; font-size:2.5rem;"></i>
+                    </div>
+                    <div class="card stat-card">
+                        <h3>{{ hotspot.latest_date }}</h3>
+                        <p>Data As Of</p>
+                        <i class="fas fa-calendar" style="opacity:0.1; position:absolute; top:16px; right:16px; font-size:2.5rem;"></i>
+                    </div>
+                </div>
+
+                <!-- Risk Ranking Table -->
+                <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; flex-wrap: wrap;">
+                    <div class="card">
+                        <h3 style="margin-bottom: 14px;">📊 Real-Time Risk Ranking</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Disease</th>
+                                    <th>Region</th>
+                                    <th>Current Cases</th>
+                                    <th>Growth</th>
+                                    <th>Score</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in ranking %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td><strong>{{ item.name }}</strong></td>
+                                    <td style="opacity:0.8;">{{ item.region }}</td>
+                                    <td>{{ item.current }}</td>
+                                    <td style="color: {% if item.growth_pct > 0 %}var(--accent-red){% else %}var(--primary-color){% endif %};">
+                                        {% if item.growth_pct > 0 %}+{% endif %}{{ item.growth_pct }}%
+                                    </td>
+                                    <td>
+                                        <div class="score-bar-wrap">
+                                            <div class="score-bar" style="width:{{ item.score }}%; background: {% if item.risk=='High' %}var(--accent-red){% elif item.risk=='Medium' %}var(--accent-orange){% else %}var(--primary-color){% endif %};"></div>
+                                        </div>
+                                        {{ item.score }}/100
+                                    </td>
+                                    <td><span class="badge badge-{{ item.risk|lower }}">{{ item.risk }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Bar Chart -->
+                    <div class="card">
+                        <h3 style="margin-bottom: 10px;">Risk Score Chart</h3>
+                        <div class="chart-container" style="height: auto; text-align: center; padding: 8px;">
+                            <img src="data:image/png;base64,{{ bar_chart }}" style="max-width: 100%; border-radius: 6px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alert Feed -->
+                <div class="card" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 14px;"><i class="fas fa-bell"></i> Live Alert Feed</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        {% for item in ranking %}
+                        {% if item.risk in ['High', 'Medium'] %}
+                        <li style="margin-bottom: 14px; border-left: 3px solid {% if item.risk=='High' %}var(--accent-red){% else %}var(--accent-orange){% endif %}; padding: 10px 14px; background: rgba(255,255,255,0.02); border-radius: 0 6px 6px 0;">
+                            <span class="badge badge-{{ item.risk|lower }}" style="margin-right: 8px;">{{ item.risk }}</span>
+                            <small>{{ item.alert }}</small>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        {% if ranking | selectattr('risk','in',['High','Medium']) | list | length == 0 %}
+                        <li style="padding: 16px; opacity: 0.6;">
+                            <i class="fas fa-check-circle" style="color: var(--primary-color); margin-right: 8px;"></i>
+                            All diseases at Low risk. No alerts generated.
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- Hotspot -->
+                <div class="card" style="margin-top: 20px; display: flex; align-items: center; gap: 20px;">
+                    <i class="fas fa-map-marker-alt" style="font-size: 2.5rem; color: var(--accent-red);"></i>
+                    <div>
+                        <h4>Top Hotspot Region: <span style="color:var(--primary-color);">{{ hotspot.hotspot_region }}</span></h4>
+                        <p style="opacity:0.7; font-size:0.9rem;">Highest aggregate disease burden in the last 7 days based on dataset analysis.</p>
+                        <p style="opacity:0.5; font-size:0.82rem;">Data updated: {{ hotspot.latest_date }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+    <script>
+        document.querySelector('.fade-in')?.classList.add('visible');
+        document.getElementById('auto-form')?.addEventListener('submit', function () {
+            const btn = document.getElementById('run-btn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running Surveillance...';
+            btn.disabled = true;
+        });
+    </script>
+</body>
+
+</html>

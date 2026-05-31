@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered multi-disease spread prediction and government alert system using ARIMA, LSTM, and SEIR models.">
+    <title>NDS & EWS — National Disease Surveillance & Early Warning System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-heartbeat"></i> NDS &amp; EWS
+            </div>
+            <nav>
+                <a href="/" class="active">Home</a>
+                <a href="/manual">Manual Prediction</a>
+                <a href="/auto">Auto Surveillance</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/about">About</a>
+            </nav>
+        </header>
+
+        <main class="hero">
+
+            <h1>National Disease Surveillance &<br>Early Warning System</h1>
+            <p>AI-Powered Multi-Disease Spread Prediction using <strong>ARIMA, LSTM &amp; SEIR</strong> models.
+                Real dataset-driven forecasting with automated Government Alert generation.</p>
+
+            <div class="hero-model-tags">
+                <span class="model-tag"><i class="fas fa-chart-line"></i> ARIMA</span>
+                <span class="model-tag"><i class="fas fa-brain"></i> LSTM</span>
+                <span class="model-tag"><i class="fas fa-virus"></i> SEIR</span>
+                <span class="model-tag active-tag"><i class="fas fa-circle"></i> Live Data</span>
+            </div>
+
+            <div class="hero-buttons">
+                <a href="/manual" class="btn btn-primary"><i class="fas fa-search-plus"></i> Manual Prediction Mode</a>
+                <a href="/auto" class="btn"><i class="fas fa-satellite-dish"></i> Auto Surveillance Mode</a>
+                <a href="/dashboard" class="btn"><i class="fas fa-chart-line"></i> Government Dashboard</a>
+            </div>
+
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="hero-stat-num">5</span>
+                    <span class="hero-stat-label">Diseases Tracked</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-num">10</span>
+                    <span class="hero-stat-label">States Monitored</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-num">3</span>
+                    <span class="hero-stat-label">AI Models</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-num">91%</span>
+                    <span class="hero-stat-label">Model Accuracy</span>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

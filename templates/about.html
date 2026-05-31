@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - NDS & EWS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-info-circle"></i> Project Overview
+            </div>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/manual">Manual Prediction</a>
+                <a href="/auto">Auto Surveillance</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/about" class="active">About</a>
+            </nav>
+        </header>
+
+        <main style="max-width: 800px; margin: 0 auto;">
+            <div class="card">
+                <h2 style="color: var(--primary-color); margin-bottom: 20px;">Project Overview</h2>
+                <p>The <strong>AI-Based Multi-Disease Spread Prediction and Government Alert System</strong> is a fully developed, integrated platform designed to forecast the spread of critical infectious diseases. By proactively predicting epidemiological trends, this system empowers public health authorities and government agencies to make data-driven decisions and implement timely interventions.</p>
+
+                <hr style="border: 0; border-top: 1px solid rgba(100,255,218,0.1); margin: 30px 0;">
+
+                <h3>Core Predictive Intelligence</h3>
+                <p>The system predicts the spread of multiple high-burden diseases, including <strong>COVID-19, Dengue, Malaria, Flu, and Tuberculosis</strong>. It achieves this through a robust ensemble modeling approach:</p>
+                <ul style="margin-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+                    <li><strong>ARIMA:</strong> Statistical time-series forecasting to capture linear trends.</li>
+                    <li><strong>LSTM (Long Short-Term Memory):</strong> Deep learning pattern recognition to model complex non-linear disease behaviors.</li>
+                    <li><strong>SEIR Models:</strong> Epidemiological compartmental modeling (Susceptible-Exposed-Infectious-Recovered) to simulate infectious disease dynamics.</li>
+                </ul>
+
+                <h3>Environmental Integration & Real-Time Analytics</h3>
+                <p>Disease transmission does not occur in a vacuum. The prediction engine integrates critical environmental factors—such as <strong>temperature, humidity, and rainfall</strong>—that dynamically influence transmission rates. This allows the system to generate realistic, context-aware forecasts rather than simple extrapolations.</p>
+
+                <p style="margin-top: 15px;">The platform offers comprehensive analytical perspectives:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li><strong>Manual Mode:</strong> Granular, region-specific forecasting for targeted investigations.</li>
+                    <li><strong>Auto Surveillance Mode:</strong> Continuous background monitoring of all active regions, auto-detecting anomalies and calculating transmission risks.</li>
+                    <li><strong>Government Dashboard:</strong> A real-time, high-level visualization of the national epidemiological landscape.</li>
+                </ul>
+
+                <hr style="border: 0; border-top: 1px solid rgba(100,255,218,0.1); margin: 30px 0;">
+
+                <h3>Proactive Risk Assessment & Alert Generation</h3>
+                <p>To support immediate government action, the system employs an automated risk classification engine. It evaluates projected growth rates and case trajectories to generate categorical risk tiers (LOW, MEDIUM, HIGH) alongside human-readable explanations. This transparent alerting mechanism ensures rapid, justifiable responses to emerging biological threats.</p>
+
+                <div style="background: rgba(0,0,0,0.3); padding: 20px; margin-top: 30px; border-radius: 8px;">
+                    <h4 style="color: var(--accent-orange); margin-bottom: 10px;">System Architecture</h4>
+                    <pre style="color: var(--text-color); font-size: 0.9rem; overflow-x: auto;">
+Data Pipeline (Historical + Environmental)
+       ↓
+Ensemble Prediction Engine (ARIMA + LSTM + SEIR)
+       ↓
+Risk Analyzer & Explanation Generator
+       ↓
+Actionable Alerts & Visual Dashboards
+                    </pre>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid rgba(100,255,218,0.1); margin: 30px 0;">
+
+                <h3 style="color: var(--primary-color);">Project Team</h3>
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
+                    <div
+                        style="background: rgba(23, 42, 69, 0.8); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid rgba(100,255,218,0.1);">
+                        <i class="fas fa-user-graduate"
+                            style="color: var(--primary-color); font-size: 2rem; margin-bottom: 10px;"></i>
+                        <h4 style="color: var(--text-color);">ANANDHU SA</h4>
+                    </div>
+                    <div
+                        style="background: rgba(23, 42, 69, 0.8); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid rgba(100,255,218,0.1);">
+                        <i class="fas fa-user-graduate"
+                            style="color: var(--primary-color); font-size: 2rem; margin-bottom: 10px;"></i>
+                        <h4 style="color: var(--text-color);">ABHIJITH MR</h4>
+                    </div>
+                    <div
+                        style="background: rgba(23, 42, 69, 0.8); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid rgba(100,255,218,0.1);">
+                        <i class="fas fa-user-graduate"
+                            style="color: var(--primary-color); font-size: 2rem; margin-bottom: 10px;"></i>
+                        <h4 style="color: var(--text-color);">DEEDSHITH DS</h4>
+                    </div>
+                    <div
+                        style="background: rgba(23, 42, 69, 0.8); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid rgba(100,255,218,0.1);">
+                        <i class="fas fa-user-graduate"
+                            style="color: var(--primary-color); font-size: 2rem; margin-bottom: 10px;"></i>
+                        <h4 style="color: var(--text-color);">AKSHAY P P</h4>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

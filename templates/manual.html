@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Manual disease spread prediction using ARIMA, LSTM, and SEIR models.">
+    <title>Manual Prediction - NDS &amp; EWS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-heartbeat"></i> NDS &amp; EWS
+            </div>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/manual" class="active">Manual Prediction</a>
+                <a href="/auto">Auto Surveillance</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/about">About</a>
+            </nav>
+        </header>
+
+        <main>
+            <h2 style="color: var(--primary-color); margin-bottom: 6px;">Manual Prediction Mode</h2>
+            <p style="opacity:0.6; margin-bottom:24px; font-size:0.9rem;">Select disease, region, timeframe &amp; AI model to generate a data-driven forecast.</p>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; align-items: flex-start;">
+                <!-- ── Input Panel ── -->
+                <div class="card" style="flex: 1; min-width: 280px; max-width: 340px;">
+                    <form method="POST" action="/manual" id="predict-form">
+
+                        <div class="form-group">
+                            <label for="disease"><i class="fas fa-virus"></i> Disease</label>
+                            <select name="disease" id="disease" required>
+                                {% for d in diseases %}
+                                <option value="{{ d }}" {% if selected_disease==d %}selected{% endif %}>{{ d }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="region"><i class="fas fa-map-marker-alt"></i> Region</label>
+                            <select name="region" id="region" required>
+                                <option value="" disabled {% if not selected_region %}selected{% endif %}>Select Region</option>
+                                {% for r in regions %}
+                                <option value="{{ r }}" {% if selected_region==r %}selected{% endif %}>{{ r }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-alt"></i> Prediction Window</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="days" value="7"  {% if selected_days=='7' %}checked{% endif %}> 7 Days</label>
+                                <label><input type="radio" name="days" value="14" {% if selected_days=='14' or not selected_days %}checked{% endif %}> 14 Days</label>
+                                <label><input type="radio" name="days" value="30" {% if selected_days=='30' %}checked{% endif %}> 30 Days</label>
+                            </div>
+                        </div>
+
+
+
+                        <button type="submit" class="btn btn-primary" id="predict-btn" style="width: 100%; margin-top: 10px;">
+                            <i class="fas fa-calculator"></i> Generate Forecast
+                        </button>
+                    </form>
+                </div>
+
+                <!-- ── Results Panel ── -->
+                <div style="flex: 2; min-width: 320px;">
+                    {% if results %}
+                    <div id="manual-results" class="fade-in">
+
+                        <!-- Alert Banner -->
+                        <div class="alert-panel {% if risk == 'High' %}alert-critical{% elif risk == 'Medium' %}alert-warning{% else %}alert-ok{% endif %}" style="margin-bottom: 20px;">
+                            <i class="fas {% if risk=='High' %}fa-exclamation-triangle{% elif risk=='Medium' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
+                            <span>{{ alert_msg }}</span>
+                        </div>
+
+                        <!-- Stats Row -->
+                        <div class="mini-stats-row">
+                            <div class="mini-stat">
+                                <span class="mini-stat-val" style="color: var(--primary-color);">{{ current_cases }}</span>
+                                <span class="mini-stat-label">Current Cases</span>
+                            </div>
+                            <div class="mini-stat">
+                                <span class="mini-stat-val" style="color: {% if risk=='High' %}var(--accent-red){% elif risk=='Medium' %}var(--accent-orange){% else %}var(--primary-color){% endif %};">
+                                    {% if growth_pct > 0 %}+{% endif %}{{ growth_pct }}%
+                                </span>
+                                <span class="mini-stat-label">Projected Growth</span>
+                            </div>
+                            <div class="mini-stat">
+                                <span class="badge badge-{{ risk|lower }}" style="font-size: 1rem; padding: 6px 14px;">{{ risk }}</span>
+                                <span class="mini-stat-label">Risk Level</span>
+                            </div>
+                            <div class="mini-stat">
+                                <span class="mini-stat-val">{{ score }}/100</span>
+                                <span class="mini-stat-label">Risk Score</span>
+                            </div>
+                        </div>
+
+                        <!-- Chart -->
+                        <div class="card" style="margin-bottom: 20px; padding: 10px;">
+                            <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:8px; padding: 0 10px;">
+                                <h4 style="color: var(--primary-color);">Actual vs Predicted — <span style="color: var(--accent-orange);">AI Multi-Model</span></h4>
+                                {% if seir_r0 %}
+                                <span style="opacity:0.6; font-size:0.82rem;">SEIR R₀ = {{ seir_r0 }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="chart-container" style="height: auto;">
+                                <img src="data:image/png;base64,{{ chart_url }}" style="max-width: 100%; border-radius: 6px;">
+                            </div>
+                        </div>
+
+                        <!-- Forecast Table -->
+                        <div class="card">
+                            <h4 style="margin-bottom: 12px;">📋 Predicted Cases — {{ selected_disease }} / {{ selected_region }}</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Combined Prediction</th>
+                                        <th>ARIMA</th>
+                                        <th>LSTM</th>
+                                        <th>SEIR</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in table_data %}
+                                    <tr>
+                                        <td>{{ row.date }}</td>
+                                        <td style="color: var(--primary-color); font-weight: bold;">{{ row.combined }}</td>
+                                        <td style="color: #ff9f43">{{ row.arima }}</td>
+                                        <td style="color: #54a0ff">{{ row.lstm }}</td>
+                                        <td style="color: #ff4d4d">{{ row.seir }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="card" style="text-align: center; padding: 60px; opacity: 0.5;">
+                        <i class="fas fa-chart-area" style="font-size: 3.5rem; margin-bottom: 16px; color: var(--primary-color);"></i>
+                        <p style="font-size: 1.1rem;">Select parameters on the left and click <strong>Generate Forecast</strong></p>
+                        <p style="font-size: 0.85rem; margin-top: 8px;">Powered by ARIMA, LSTM &amp; SEIR epidemiological models</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        document.querySelector('.fade-in')?.classList.add('visible');
+        document.getElementById('predict-form')?.addEventListener('submit', function () {
+            const btn = document.getElementById('predict-btn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running Model...';
+            btn.disabled = true;
+        });
+    </script>
+</body>
+
+</html>
