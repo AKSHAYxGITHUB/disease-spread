@@ -5,17 +5,15 @@ model evaluation (RMSE), and best model selection on dashboard.
 """
 
 from flask import Flask, render_template, request, jsonify
-import io, base64, os, math
+import io, base64, os
 from datetime import datetime, timedelta
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib.figure import Figure
 import numpy as np
-from sklearn.metrics import mean_squared_error
 
 # --- Phase 2 modules ---
 import data_loader
-from models import arima_model, seir_model, lstm_model
 import risk_analyzer
 
 app = Flask(__name__)
@@ -133,30 +131,6 @@ def make_trend_chart(series_dict):
     return _fig_to_base64(fig)
 
 
-# ── RMSE Utility ──────────────────────────────────────────────────────────────
-
-def calculate_rmse(actual: list, predicted: list) -> float:
-    """Calculate RMSE between actual and predicted lists."""
-    length = min(len(actual), len(predicted))
-    if length == 0:
-        return None
-    return round(math.sqrt(mean_squared_error(actual[:length], predicted[:length])), 2)
-
-
-def select_best_model(rmse_arima, rmse_lstm, rmse_seir) -> str:
-    """Return name of model with lowest RMSE."""
-    rmse_dict = {}
-    if rmse_arima is not None:
-        rmse_dict['ARIMA'] = rmse_arima
-    if rmse_lstm is not None:
-        rmse_dict['LSTM'] = rmse_lstm
-    if rmse_seir is not None:
-        rmse_dict['SEIR'] = rmse_seir
-    if not rmse_dict:
-        return 'ARIMA'
-    return min(rmse_dict, key=rmse_dict.get)
-
-
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route('/')
@@ -187,20 +161,6 @@ def manual():
             f_lstm      = result['f_lstm']
             f_seir      = result['f_seir']
             actual_vals = result['actual_history']
-
-            # ── RMSE Evaluation ───────────────────────────────────────────
-            rmse_arima = None
-            rmse_lstm  = None
-            rmse_seir  = None
-
-            if actual_vals and len(actual_vals) >= days:
-                actual_tail = actual_vals[-days:]
-                rmse_arima = calculate_rmse(actual_tail, f_arima)
-                if f_lstm:
-                    rmse_lstm = calculate_rmse(actual_tail, f_lstm)
-                rmse_seir = calculate_rmse(actual_tail, f_seir)
-
-            best_model = select_best_model(rmse_arima, rmse_lstm, rmse_seir)
 
             # ── Table Data ────────────────────────────────────────────────
             table_data = []
@@ -235,10 +195,6 @@ def manual():
                 chart_url=chart_url,
                 seir_r0=result['seir_r0'],
                 current_cases=result['current_cases'],
-                rmse_arima=rmse_arima,
-                rmse_lstm=rmse_lstm,
-                rmse_seir=rmse_seir,
-                best_model=best_model,
                 reason=result['explanation'])
 
         except Exception as e:
@@ -334,31 +290,22 @@ def dashboard():
     top_pred    = prediction_engine.predict(top_disease, top_region, 30)
     seir_chart  = make_seir_chart(top_pred['seir_r_full'], top_disease)
 
-    # ── RMSE Evaluation for Dashboard ────────────────────────────────────────
-    actual_vals = top_pred['actual_history']
-    f_arima     = top_pred['f_arima']
-    f_lstm      = top_pred['f_lstm']
-    f_seir      = top_pred['f_seir']
-    eval_days   = 14
-
-    rmse_arima = None
-    rmse_lstm  = None
-    rmse_seir  = None
-
-    if actual_vals and len(actual_vals) >= eval_days:
-        actual_tail = actual_vals[-eval_days:]
-        rmse_arima  = calculate_rmse(actual_tail, f_arima)
-        if f_lstm:
-            rmse_lstm = calculate_rmse(actual_tail, f_lstm)
-        rmse_seir = calculate_rmse(actual_tail, f_seir)
-
-    best_model = select_best_model(rmse_arima, rmse_lstm, rmse_seir)
+    # ── Honest holdout backtest for the headline (top-risk) disease ──────────
+    eval_days = 14
+    bt = prediction_engine.backtest(top_disease, top_region, eval_days)
+    rmse_arima = bt['rmse_arima'] if bt else None
+    rmse_lstm  = bt['rmse_lstm']  if bt else None
+    rmse_seir  = bt['rmse_seir']  if bt else None
+    best_model = bt['best_model'] if bt else 'ARIMA'
+    accuracy   = bt['accuracy']   if bt else None   # real backtest accuracy, not hardcoded
 
     stats = {
         'monitored':   len(diseases),
         'high_risk':   high_count,
         'reports':     summary['total_cases_week'],
-        'accuracy':    94,
+        'accuracy':    accuracy,
+        'eval_disease': top_disease,
+        'eval_days':    eval_days,
         'hotspot':     summary['hotspot_region'],
         'latest_date': summary['latest_date'],
     }

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Autonomous disease surveillance using real-time AI risk classification across all monitored diseases.">
+    <meta name="description" content="Automated disease surveillance using AI risk classification across all monitored diseases (synthetic dataset).">
     <title>Auto Surveillance - NDS &amp; EWS</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
@@ -28,8 +28,8 @@
 
         <main>
             <div style="text-align: center; margin-bottom: 30px;">
-                <h2 style="color: var(--primary-color);">Autonomous Disease Surveillance</h2>
-                <p style="opacity:0.7;">Real-time ARIMA-powered risk assessment across all registered diseases and regions.</p>
+                <h2 style="color: var(--primary-color);">Automated Disease Surveillance</h2>
+                <p style="opacity:0.7;">Automated ensemble-powered risk assessment across all registered diseases and regions (synthetic dataset).</p>
 
                 <form method="POST" action="/auto" id="auto-form">
                     <button type="submit" class="btn btn-primary" id="run-btn" style="margin-top: 20px;">
@@ -74,7 +74,7 @@
                 <!-- Risk Ranking Table -->
                 <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; flex-wrap: wrap;">
                     <div class="card">
-                        <h3 style="margin-bottom: 14px;">📊 Real-Time Risk Ranking</h3>
+                        <h3 style="margin-bottom: 14px;">📊 Automated Risk Ranking</h3>
                         <table>
                             <thead>
                                 <tr>
@@ -121,7 +121,7 @@
 
                 <!-- Alert Feed -->
                 <div class="card" style="margin-top: 20px;">
-                    <h3 style="margin-bottom: 14px;"><i class="fas fa-bell"></i> Live Alert Feed</h3>
+                    <h3 style="margin-bottom: 14px;"><i class="fas fa-bell"></i> Automated Alert Feed</h3>
                     <ul style="list-style: none; padding: 0;">
                         {% for item in ranking %}
                         {% if item.risk in ['High', 'Medium'] %}

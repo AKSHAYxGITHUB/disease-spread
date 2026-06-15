@@ -64,7 +64,9 @@ def forecast(series, disease: str, region: str, steps: int = 14) -> dict:
         X = np.array(X).reshape(-1, WINDOW, 1)
         y = np.array(y)
 
-        cache_key = (disease, region)
+        # Key on the training length too, so a backtest (trained on a truncated
+        # series) never serves the live model trained on the full series.
+        cache_key = (disease, region, len(values))
         if cache_key not in _MODEL_CACHE:
             model = Sequential([
                 LSTM(16, activation='tanh', input_shape=(WINDOW, 1)),
