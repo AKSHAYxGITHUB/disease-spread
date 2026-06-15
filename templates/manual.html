@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Manual disease spread prediction using ARIMA, LSTM, and SEIR models.">
+    <meta name="description" content="Manual disease spread prediction using ARIMA, Neural Net (MLP), and SEIR models.">
     <title>Manual Prediction - NDS &amp; EWS</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
@@ -126,7 +126,7 @@
                                         <th>Date</th>
                                         <th>Combined Prediction</th>
                                         <th>ARIMA</th>
-                                        <th>LSTM</th>
+                                        <th>Neural Net</th>
                                         <th>SEIR</th>
                                     </tr>
                                 </thead>
@@ -148,7 +148,7 @@
                     <div class="card" style="text-align: center; padding: 60px; opacity: 0.5;">
                         <i class="fas fa-chart-area" style="font-size: 3.5rem; margin-bottom: 16px; color: var(--primary-color);"></i>
                         <p style="font-size: 1.1rem;">Select parameters on the left and click <strong>Generate Forecast</strong></p>
-                        <p style="font-size: 0.85rem; margin-top: 8px;">Powered by ARIMA, LSTM &amp; SEIR epidemiological models</p>
+                        <p style="font-size: 0.85rem; margin-top: 8px;">Powered by ARIMA, Neural Net &amp; SEIR models</p>
                     </div>
                     {% endif %}
                 </div>

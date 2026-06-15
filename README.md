@@ -5,7 +5,12 @@
 > is **not** intended for real medical, public-health, or government decision-making.
 
 This is the Phase-2 system for the "National Disease Surveillance & Early Warning System".
-It features a Flask backend and a vanilla HTML/CSS/JS frontend powered by fully integrated ML models (ARIMA, LSTM, SEIR).
+It features a Flask backend and a vanilla HTML/CSS/JS frontend powered by fully integrated ML models (ARIMA, a Neural Network / MLP, and SEIR).
+
+> **Note on the neural model:** the "neural net" slot uses a lightweight scikit-learn `MLPRegressor`
+> rather than a TensorFlow/Keras LSTM, so the whole app runs inside a 512 MB free-tier instance
+> (importing TensorFlow alone would exhaust that memory). The interface is identical; swap in a
+> TF LSTM if you deploy to a larger host.
 
 ## Setup
 
@@ -35,7 +40,7 @@ Model accuracy shown on the dashboard comes from an **honest holdout backtest**:
 actuals (true out-of-sample RMSE). No accuracy figures are hardcoded.
 
 ## Disclaimer
-This project runs in Phase 2 with active ML models (ARIMA, LSTM, SEIR) for spread prediction. The
+This project runs in Phase 2 with active ML models (ARIMA, a Neural Network/MLP, and SEIR) for spread prediction. The
 underlying dataset is **synthetic** — algorithmically generated with realistic constraints,
 geographical correlations, and meteorological limits for demonstration purposes only. It does not
 represent real outbreaks, and its forecasts must not be used for any actual medical, public-health,

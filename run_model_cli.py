@@ -19,7 +19,7 @@ def run_demo():
         result = prediction_engine.predict(disease, region, days)
         
         # Display Results
-        print(f"{'Day':<6} | {'Ensemble':<10} | {'ARIMA':<10} | {'LSTM':<10} | {'SEIR':<10}")
+        print(f"{'Day':<6} | {'Ensemble':<10} | {'ARIMA':<10} | {'NeuralNet':<10} | {'SEIR':<10}")
         print("-" * 55)
         
         forecast = result['forecast']

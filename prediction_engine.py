@@ -10,11 +10,17 @@ from models import arima_model, lstm_model, seir_model
 import data_loader
 import risk_analyzer
 
+# Cap how much recent history feeds the models — keeps ARIMA/NN fitting fast on
+# low-CPU hosts while staying well above what the models need. The chart draws
+# only the most recent slice so forecasts stay readable.
+MODEL_HISTORY_DAYS = 365
+CHART_HISTORY_DAYS = 120
+
 
 # ── Ensemble & evaluation helpers ──────────────────────────────────────────────
 
 def _ensemble(f_arima: list, f_lstm, f_seir: list, days: int) -> list:
-    """Weighted combination of the three model forecasts (LSTM optional)."""
+    """Weighted combination of the three model forecasts (neural net optional)."""
     combined_forecast = []
     for i in range(days):
         cases_a = f_arima[i]
@@ -22,10 +28,10 @@ def _ensemble(f_arima: list, f_lstm, f_seir: list, days: int) -> list:
         cases_l = f_lstm[i] if f_lstm else None
 
         if cases_l is not None:
-            # 0.5 LSTM + 0.3 ARIMA + 0.2 SEIR
+            # 0.5 Neural Net + 0.3 ARIMA + 0.2 SEIR
             combined = int(0.5 * cases_l + 0.3 * cases_a + 0.2 * cases_s)
         else:
-            # Fallback if LSTM missing: increase ARIMA weight
+            # Fallback if neural net missing: increase ARIMA weight
             combined = int(0.7 * cases_a + 0.3 * cases_s)
 
         combined_forecast.append(max(0, combined))
@@ -60,7 +66,7 @@ def best_model(rmse_arima, rmse_lstm, rmse_seir) -> str:
     if rmse_arima is not None:
         scores['ARIMA'] = rmse_arima
     if rmse_lstm is not None:
-        scores['LSTM'] = rmse_lstm
+        scores['Neural Net'] = rmse_lstm
     if rmse_seir is not None:
         scores['SEIR'] = rmse_seir
     if not scores:
@@ -78,7 +84,7 @@ def backtest(disease: str, region: str, horizon: int = 14) -> dict:
     accuracy. Returns None if there isn't enough history to hold out a window.
     """
     series = data_loader.get_series(disease, region)
-    values = series.dropna().astype(float)
+    values = series.tail(MODEL_HISTORY_DAYS + horizon).dropna().astype(float)
 
     # Need enough history for a model to train AND a window to hold out.
     if len(values) < horizon + 15:
@@ -128,6 +134,7 @@ def predict(disease: str, region: str, days: int = 14) -> dict:
     """
     series  = data_loader.get_series(disease, region)
     current = int(series.iloc[-1])
+    model_series = series.tail(MODEL_HISTORY_DAYS)
     latest_row = data_loader.get_latest_row(disease, region)
 
     # Environmental parameters for SEIR
@@ -136,12 +143,12 @@ def predict(disease: str, region: str, days: int = 14) -> dict:
     rain = latest_row.get('Rainfall', 50.0)
 
     # 1. Run Models
-    res_arima = arima_model.forecast(series, disease, region, steps=days)
+    res_arima = arima_model.forecast(model_series, disease, region, steps=days)
     f_arima   = res_arima['forecast']
-    
+
     res_lstm = None
     try:
-        res_lstm = lstm_model.forecast(series, disease, region, steps=days)
+        res_lstm = lstm_model.forecast(model_series, disease, region, steps=days)
     except Exception:
         pass
     
@@ -178,7 +185,7 @@ def predict(disease: str, region: str, days: int = 14) -> dict:
         reason=risk_info.get('reason', '')
     )
 
-    models_used = "LSTM, ARIMA, SEIR (Ensemble)" if f_lstm else "ARIMA, SEIR (Ensemble)"
+    models_used = "Neural Net, ARIMA, SEIR (Ensemble)" if f_lstm else "ARIMA, SEIR (Ensemble)"
 
     return {
         'disease': disease,
@@ -191,7 +198,7 @@ def predict(disease: str, region: str, days: int = 14) -> dict:
         'f_seir': f_seir,
         'seir_r_full': seir_r,
         'seir_r0': seir_r['R0_value'],
-        'actual_history': res_arima['actual'],
+        'actual_history': res_arima['actual'][-CHART_HISTORY_DAYS:],
         'risk_info': risk_info,
         'alert_msg': alert_msg,
         'explanation': risk_info.get('reason', ''),

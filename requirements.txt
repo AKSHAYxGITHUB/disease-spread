@@ -5,5 +5,4 @@ numpy
 statsmodels
 scipy
 scikit-learn
-tensorflow
 gunicorn

@@ -3,7 +3,10 @@ services:
     name: disease-spread-prediction
     env: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn app:app"
+    # Single worker keeps memory low on the free tier (each worker loads the
+    # dataset + libraries); a generous timeout covers slow first-request model
+    # training on a low-CPU instance.
+    startCommand: "gunicorn app:app --workers 1 --threads 2 --timeout 120"
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0

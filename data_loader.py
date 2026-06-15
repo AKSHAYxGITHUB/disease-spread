@@ -71,8 +71,13 @@ def load_data(force_reload=False):
             "Run data_generator.py first."
         )
 
-    df = pd.read_csv(_DATASET_PATH)
-    df['Date'] = pd.to_datetime(df['Date'])
+    # Parse dates at read time and downcast the numeric columns to keep the
+    # in-memory footprint small (important on low-RAM hosting).
+    df = pd.read_csv(
+        _DATASET_PATH,
+        parse_dates=['Date'],
+        dtype={'Temperature': 'float32', 'Humidity': 'float32', 'Rainfall': 'float32'},
+    )
     df = df.sort_values('Date').reset_index(drop=True)
 
     # --- Real-time synthesis: Ensure data up to today ---

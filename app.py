@@ -1,16 +1,15 @@
 """
 Disease Spread Prediction System — Phase 2 (Final Production)
-Flask application with ARIMA / SEIR / LSTM models, risk classification,
+Flask application with ARIMA / SEIR / Neural-Net (MLP) models, risk classification,
 model evaluation (RMSE), and best model selection on dashboard.
 """
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request
 import io, base64, os
-from datetime import datetime, timedelta
+from datetime import timedelta
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib.figure import Figure
-import numpy as np
 
 # --- Phase 2 modules ---
 import data_loader
@@ -64,7 +63,7 @@ def make_forecast_chart_multi(actual, f_arima, f_lstm, f_seir, disease, days):
 
     line_lstm = [actual[-1]] + f_lstm
     ax.plot(x_fc, line_lstm, color='#54a0ff', linewidth=2,
-            linestyle='-.', marker='^', markersize=3, label='LSTM Forecast')
+            linestyle='-.', marker='^', markersize=3, label='Neural Net Forecast')
 
     line_seir = [actual[-1]] + f_seir
     ax.plot(x_fc, line_seir, color='#ff4d4d', linewidth=2,
@@ -270,8 +269,8 @@ def dashboard():
 
     trend_chart = make_trend_chart(trend_dict)
 
-    # Regional bar chart
-    df      = data_loader.load_data(force_reload=True)
+    # Regional bar chart (use the cached frame — no need to re-read the CSV)
+    df      = data_loader.load_data()
     latest  = df['Date'].max()
     week_ago = latest - _pd.Timedelta(days=7)
     recent  = df[df['Date'] >= week_ago].copy()

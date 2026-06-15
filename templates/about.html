@@ -41,7 +41,7 @@
                 <p>The system predicts the spread of multiple high-burden diseases, including <strong>COVID-19, Dengue, Malaria, Flu, and Tuberculosis</strong>. It achieves this through a robust ensemble modeling approach:</p>
                 <ul style="margin-left: 20px; margin-top: 10px; margin-bottom: 20px;">
                     <li><strong>ARIMA:</strong> Statistical time-series forecasting to capture linear trends.</li>
-                    <li><strong>LSTM (Long Short-Term Memory):</strong> Deep learning pattern recognition to model complex non-linear disease behaviors.</li>
+                    <li><strong>Neural Network (Multi-Layer Perceptron):</strong> A compact feed-forward neural network that learns non-linear patterns from recent case windows. (A lightweight MLP is used instead of a TensorFlow LSTM so the app runs on free-tier hosting.)</li>
                     <li><strong>SEIR Models:</strong> Epidemiological compartmental modeling (Susceptible-Exposed-Infectious-Recovered) to simulate infectious disease dynamics.</li>
                 </ul>
 
@@ -65,7 +65,7 @@
                     <pre style="color: var(--text-color); font-size: 0.9rem; overflow-x: auto;">
 Data Pipeline (Historical + Environmental)
        ↓
-Ensemble Prediction Engine (ARIMA + LSTM + SEIR)
+Ensemble Prediction Engine (ARIMA + Neural Net + SEIR)
        ↓
 Risk Analyzer & Explanation Generator
        ↓

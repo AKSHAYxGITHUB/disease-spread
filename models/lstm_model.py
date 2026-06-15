@@ -1,10 +1,20 @@
 """
-LSTM Model — Disease Spread Prediction System
-Speed + RMSE Fix:
-  - Window=7, 16 units, 15 epochs, patience=3
-  - In-memory model cache per disease+region
-  - Moving average fallback (also a better baseline than random)
-  - Clip predictions to ±30% of last known value per step (prevents runaway)
+Neural Network Forecaster — Disease Spread Prediction System
+============================================================
+A compact feed-forward neural network (Multi-Layer Perceptron) that learns
+non-linear patterns from recent case windows and forecasts future cases.
+
+This is the "neural net" slot of the ensemble. It deliberately uses
+scikit-learn's MLPRegressor instead of a TensorFlow/Keras LSTM so the whole
+app runs comfortably inside constrained hosting (e.g. a 512 MB free tier),
+where importing TensorFlow alone would exhaust memory. The public interface
+(`forecast`) is unchanged, so the rest of the system is unaffected.
+
+Design:
+  - Sliding window of 7 days → predict next day (recursive multi-step forecast).
+  - Min-max scaling per series; predictions clipped to prevent runaway values.
+  - In-memory model cache keyed on (disease, region, training-length).
+  - Weighted moving-average fallback for very short series or any failure.
 """
 
 import numpy as np
@@ -16,7 +26,7 @@ _MODEL_CACHE = {}
 
 
 def _moving_average_forecast(values: list, steps: int) -> list:
-    """Weighted moving average — decent baseline, fast, no TF needed."""
+    """Weighted moving average — fast, dependency-free baseline."""
     window  = min(7, len(values))
     base    = values[-window:]
     weights = np.arange(1, window + 1, dtype=float)
@@ -40,53 +50,47 @@ def forecast(series, disease: str, region: str, steps: int = 14) -> dict:
         return {'forecast': _moving_average_forecast(values, steps)}
 
     try:
-        import os
-        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+        from sklearn.neural_network import MLPRegressor
 
-        import tensorflow as tf
-        tf.get_logger().setLevel('ERROR')
-        from tensorflow.keras.models import Sequential
-        from tensorflow.keras.layers import LSTM, Dense
-        from tensorflow.keras.callbacks import EarlyStopping
-
-        # Scale
+        # Min-max scale to [0, 1] for stable training.
         v_min   = min(values)
         v_max   = max(values)
         v_range = (v_max - v_min) if v_max != v_min else 1.0
         scaled  = [(v - v_min) / v_range for v in values]
 
-        # Sequences
+        # Build sliding-window supervised samples.
         X, y = [], []
         for i in range(len(scaled) - WINDOW):
             X.append(scaled[i: i + WINDOW])
             y.append(scaled[i + WINDOW])
-        X = np.array(X).reshape(-1, WINDOW, 1)
+        X = np.array(X)
         y = np.array(y)
 
-        # Key on the training length too, so a backtest (trained on a truncated
-        # series) never serves the live model trained on the full series.
+        # Cache on the training length too, so a backtest (trained on a
+        # truncated series) never serves the live model trained on the full one.
         cache_key = (disease, region, len(values))
         if cache_key not in _MODEL_CACHE:
-            model = Sequential([
-                LSTM(16, activation='tanh', input_shape=(WINDOW, 1)),
-                Dense(1)
-            ])
-            model.compile(optimizer='adam', loss='mse')
-            es = EarlyStopping(monitor='loss', patience=3,
-                               restore_best_weights=True, verbose=0)
-            model.fit(X, y, epochs=15, batch_size=16,
-                      verbose=0, callbacks=[es])
+            model = MLPRegressor(
+                hidden_layer_sizes=(24, 12),
+                activation='relu',
+                solver='adam',
+                alpha=1e-3,                 # L2 regularization
+                learning_rate_init=0.01,
+                max_iter=400,
+                random_state=42,            # deterministic forecasts
+            )
+            model.fit(X, y)
             _MODEL_CACHE[cache_key] = model
 
         model = _MODEL_CACHE[cache_key]
 
+        # Recursive multi-step forecast.
         window_vals = list(scaled[-WINDOW:])
         predictions = []
         for _ in range(steps):
-            inp  = np.array(window_vals[-WINDOW:]).reshape(1, WINDOW, 1)
-            pred = float(model.predict(inp, verbose=0)[0][0])
-            # Clip to [0, 1.2] to stop runaway predictions
+            inp  = np.array(window_vals[-WINDOW:]).reshape(1, -1)
+            pred = float(model.predict(inp)[0])
+            # Clip to [0, 1.2] to stop runaway predictions.
             pred = max(0.0, min(pred, 1.2))
             predictions.append(pred)
             window_vals.append(pred)
