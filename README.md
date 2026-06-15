@@ -119,7 +119,9 @@ represent real outbreaks, and its forecasts must not be used for any actual medi
 or policy decisions.
 
 ## License
-Released under the [MIT License](LICENSE).
+© 2026 Akshay. **All rights reserved.** This source code is provided for viewing purposes only —
+no permission is granted to copy, modify, distribute, sublicense, or use it in any project without
+explicit written permission from the author. See [LICENSE](LICENSE).
 
 ## Team
 Anandhu SA · Abhijith MR · Deedshith DS · Akshay P P
